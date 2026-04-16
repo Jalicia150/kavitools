@@ -1,3 +1,5 @@
+import { isPro } from "@/lib/pro";
+
 export interface LineItem {
   id: string;
   description: string;
@@ -82,10 +84,11 @@ export function incrementInvoiceCount(): void {
 }
 
 export function canCreateInvoice(): boolean {
-  // TODO: check pro subscription status
+  if (isPro()) return true;
   return getInvoiceCount() < FREE_LIMIT;
 }
 
 export function remainingInvoices(): number {
+  if (isPro()) return Infinity;
   return Math.max(0, FREE_LIMIT - getInvoiceCount());
 }

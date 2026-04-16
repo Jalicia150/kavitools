@@ -35,7 +35,7 @@ export async function GET() {
         },
       ],
       mode: "subscription",
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://kavitools.vercel.app"}/create?pro=true`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://kavitools.vercel.app"}/create?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "https://kavitools.vercel.app"}/#pricing`,
     });
 
