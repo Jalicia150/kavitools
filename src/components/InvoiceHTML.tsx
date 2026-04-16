@@ -1,11 +1,20 @@
 "use client";
 
 import { InvoiceData, calculateSubtotal, calculateTax, calculateTotal, formatCurrency } from "@/lib/invoice";
+import type { BrandingSettings } from "@/lib/branding";
 
-export function generateInvoiceHTML(data: InvoiceData): string {
+const DEFAULT_COLOR = "#4f46e5";
+const DEFAULT_FOOTER = "Generated with KaviTools &mdash; kavitools.vercel.app";
+
+export function generateInvoiceHTML(data: InvoiceData, branding?: BrandingSettings): string {
   const subtotal = calculateSubtotal(data.items);
   const tax = calculateTax(subtotal, data.taxRate);
   const total = calculateTotal(data.items, data.taxRate);
+  const accent = branding?.accentColor || DEFAULT_COLOR;
+  const footer = branding?.footerText || DEFAULT_FOOTER;
+  const logoHtml = branding?.logoDataUrl
+    ? `<img src="${branding.logoDataUrl}" style="max-height:60px;max-width:200px;margin-bottom:12px;display:block;" />`
+    : "";
 
   const itemRows = data.items
     .map(
@@ -30,7 +39,7 @@ export function generateInvoiceHTML(data: InvoiceData): string {
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#1a1a1a; font-size:13px; line-height:1.5; }
   .invoice { max-width:800px; margin:0 auto; padding:40px; }
   .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:40px; }
-  .title { font-size:32px; font-weight:800; color:#4f46e5; margin-bottom:4px; letter-spacing:-0.5px; }
+  .title { font-size:32px; font-weight:800; color:${accent}; margin-bottom:4px; letter-spacing:-0.5px; }
   .inv-number { font-size:14px; color:#6b7280; }
   .meta { text-align:right; }
   .meta-label { font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:2px; }
@@ -41,13 +50,13 @@ export function generateInvoiceHTML(data: InvoiceData): string {
   .party-name { font-weight:700; margin-bottom:2px; }
   .party-detail { color:#4b5563; font-size:12px; }
   table { width:100%; border-collapse:collapse; margin-bottom:24px; }
-  th { font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; padding:8px 12px; border-bottom:2px solid #4f46e5; text-align:left; }
+  th { font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; padding:8px 12px; border-bottom:2px solid ${accent}; text-align:left; }
   th:nth-child(2) { text-align:center; }
   th:nth-child(3), th:nth-child(4) { text-align:right; }
   .totals { display:flex; justify-content:flex-end; }
   .totals-box { width:240px; }
   .total-row { display:flex; justify-content:space-between; padding:4px 0; font-size:13px; color:#6b7280; }
-  .grand-total { display:flex; justify-content:space-between; border-top:2px solid #4f46e5; padding-top:8px; margin-top:6px; font-size:16px; font-weight:700; color:#4f46e5; }
+  .grand-total { display:flex; justify-content:space-between; border-top:2px solid ${accent}; padding-top:8px; margin-top:6px; font-size:16px; font-weight:700; color:${accent}; }
   .notes { margin-top:32px; padding:16px; background:#f9fafb; border-radius:6px; }
   .notes-title { font-size:10px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
   .notes-text { font-size:12px; color:#4b5563; }
@@ -59,6 +68,7 @@ export function generateInvoiceHTML(data: InvoiceData): string {
 <div class="invoice">
   <div class="header">
     <div>
+      ${logoHtml}
       <div class="title">INVOICE</div>
       <div class="inv-number">${data.invoiceNumber}</div>
     </div>
@@ -115,14 +125,14 @@ export function generateInvoiceHTML(data: InvoiceData): string {
 
   ${data.notes ? `<div class="notes"><div class="notes-title">Notes</div><div class="notes-text">${data.notes}</div></div>` : ""}
 
-  <div class="footer">Generated with KaviTools &mdash; kavitools.vercel.app</div>
+  <div class="footer">${footer}</div>
 </div>
 </body>
 </html>`;
 }
 
-export function downloadInvoicePDF(data: InvoiceData): void {
-  const html = generateInvoiceHTML(data);
+export function downloadInvoicePDF(data: InvoiceData, branding?: BrandingSettings): void {
+  const html = generateInvoiceHTML(data, branding);
   const printWindow = window.open("", "_blank");
   if (!printWindow) {
     alert("Please allow popups to download your invoice.");

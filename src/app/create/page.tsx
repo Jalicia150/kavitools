@@ -14,6 +14,7 @@ import {
   remainingInvoices,
 } from "@/lib/invoice";
 import { isPro, setProStatus } from "@/lib/pro";
+import { getBranding, saveBranding, type BrandingSettings } from "@/lib/branding";
 import { downloadInvoicePDF } from "@/components/InvoiceHTML";
 
 function newItem(): LineItem {
@@ -42,6 +43,7 @@ function CreateInvoiceInner() {
   const [canCreate, setCanCreate] = useState(true);
   const [proActive, setProActive] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [branding, setBranding] = useState<BrandingSettings>(getBranding());
 
   const [data, setData] = useState<InvoiceData>({
     senderName: "",
@@ -88,6 +90,7 @@ function CreateInvoiceInner() {
     setProActive(pro);
     setRemaining(remainingInvoices());
     setCanCreate(canCreateInvoice());
+    if (pro) setBranding(getBranding());
   }, []);
 
   const refreshLimits = useCallback(() => {
@@ -130,7 +133,31 @@ function CreateInvoiceInner() {
     if (!canCreate) return;
     incrementInvoiceCount();
     refreshLimits();
-    downloadInvoicePDF(data);
+    downloadInvoicePDF(data, proActive ? branding : undefined);
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const updated = { ...branding, logoDataUrl: reader.result as string };
+      setBranding(updated);
+      saveBranding(updated);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveLogo = () => {
+    const updated = { ...branding, logoDataUrl: null };
+    setBranding(updated);
+    saveBranding(updated);
+  };
+
+  const handleBrandingChange = (field: keyof BrandingSettings, value: string) => {
+    const updated = { ...branding, [field]: value };
+    setBranding(updated);
+    saveBranding(updated);
   };
 
   const subtotal = calculateSubtotal(data.items);
@@ -421,6 +448,81 @@ function CreateInvoiceInner() {
             </div>
           </div>
         </section>
+
+        {/* Custom Branding (Pro only) */}
+        {proActive && (
+          <section className="bg-gray-900 border border-brand-800 rounded-xl p-6">
+            <h2 className="text-lg font-semibold mb-1 flex items-center gap-2">
+              ⚡ Custom Branding
+              <span className="text-xs font-normal text-brand-400">(Pro)</span>
+            </h2>
+            <p className="text-xs text-gray-500 mb-4">Settings are saved in your browser.</p>
+            <div className="space-y-5">
+              {/* Logo Upload */}
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Logo</label>
+                {branding.logoDataUrl ? (
+                  <div className="flex items-center gap-4">
+                    <div className="bg-white rounded-lg p-2 inline-block">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={branding.logoDataUrl}
+                        alt="Logo preview"
+                        className="max-h-12 max-w-[160px] object-contain"
+                      />
+                    </div>
+                    <button
+                      onClick={handleRemoveLogo}
+                      className="text-sm text-red-400 hover:text-red-300"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/svg+xml"
+                    onChange={handleLogoUpload}
+                    className="text-sm text-gray-400 file:mr-3 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-gray-800 file:text-gray-300 hover:file:bg-gray-700 file:cursor-pointer"
+                  />
+                )}
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Accent Color */}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Accent Color</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={branding.accentColor}
+                      onChange={(e) => handleBrandingChange("accentColor", e.target.value)}
+                      className="w-10 h-10 rounded-lg border border-gray-700 bg-gray-800 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={branding.accentColor}
+                      onChange={(e) => handleBrandingChange("accentColor", e.target.value)}
+                      className="w-28 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500 font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* Footer Text */}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Invoice Footer</label>
+                  <input
+                    type="text"
+                    value={branding.footerText}
+                    onChange={(e) => handleBrandingChange("footerText", e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500"
+                    placeholder="Generated with KaviTools"
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Generate */}
         <div className="flex flex-col items-center gap-4">
