@@ -1,6 +1,28 @@
 export default function Home() {
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "KaviTools",
+            "description": "Free professional invoice generator. Create and download PDF invoices in seconds.",
+            "url": "https://kavitools.vercel.app",
+            "applicationCategory": "BusinessApplication",
+            "offers": {
+              "@type": "AggregateOffer",
+              "lowPrice": "0",
+              "highPrice": "5",
+              "priceCurrency": "USD",
+              "offerCount": "2"
+            },
+            "operatingSystem": "Any",
+            "browserRequirements": "Requires JavaScript"
+          })
+        }}
+      />
       {/* Hero */}
       <section className="py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">

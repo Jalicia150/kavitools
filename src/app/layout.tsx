@@ -1,10 +1,32 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "KaviTools — Free Invoice Generator",
+  title: "KaviTools — Free Invoice Generator | Create Professional Invoices in Seconds",
   description:
-    "Create professional invoices in seconds. Free to use, no signup required.",
+    "Create professional PDF invoices in seconds. No signup required. Free for up to 3 invoices per month, unlimited with Pro at $5/mo. Perfect for freelancers and small businesses.",
+  keywords: ["invoice generator", "free invoice", "PDF invoice", "invoice maker", "freelance invoice", "small business invoice", "online invoice generator"],
+  metadataBase: new URL("https://kavitools.vercel.app"),
+  openGraph: {
+    title: "KaviTools — Free Invoice Generator",
+    description: "Create professional PDF invoices in seconds. No signup, no account needed.",
+    url: "https://kavitools.vercel.app",
+    siteName: "KaviTools",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "KaviTools — Free Invoice Generator",
+    description: "Create professional PDF invoices in seconds. No signup needed.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: "https://kavitools.vercel.app",
+  },
 };
 
 export default function RootLayout({
@@ -39,6 +61,7 @@ export default function RootLayout({
             © {new Date().getFullYear()} KaviTools. All rights reserved.
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
