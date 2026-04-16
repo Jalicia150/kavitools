@@ -1,10 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import type {
-  InvoiceData,
-  LineItem,
-} from "@/lib/invoice";
+import type { InvoiceData, LineItem } from "@/lib/invoice";
 import {
   calculateSubtotal,
   calculateTax,
@@ -15,6 +12,7 @@ import {
   canCreateInvoice,
   remainingInvoices,
 } from "@/lib/invoice";
+import { downloadInvoicePDF } from "@/components/InvoiceHTML";
 
 function newItem(): LineItem {
   return {
@@ -39,9 +37,6 @@ export default function CreateInvoice() {
   const [mounted, setMounted] = useState(false);
   const [remaining, setRemaining] = useState(3);
   const [canCreate, setCanCreate] = useState(true);
-  const [generated, setGenerated] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [pdfLoading, setPdfLoading] = useState(false);
 
   const [data, setData] = useState<InvoiceData>({
     senderName: "",
@@ -67,8 +62,6 @@ export default function CreateInvoice() {
   const update = useCallback(
     (field: keyof InvoiceData, value: string | number | LineItem[]) => {
       setData((prev) => ({ ...prev, [field]: value }));
-      setGenerated(false);
-      setPdfUrl(null);
     },
     []
   );
@@ -81,16 +74,12 @@ export default function CreateInvoice() {
           item.id === id ? { ...item, [field]: value } : item
         ),
       }));
-      setGenerated(false);
-      setPdfUrl(null);
     },
     []
   );
 
   const addItem = useCallback(() => {
     setData((prev) => ({ ...prev, items: [...prev.items, newItem()] }));
-    setGenerated(false);
-    setPdfUrl(null);
   }, []);
 
   const removeItem = useCallback((id: string) => {
@@ -98,37 +87,14 @@ export default function CreateInvoice() {
       ...prev,
       items: prev.items.filter((item) => item.id !== id),
     }));
-    setGenerated(false);
-    setPdfUrl(null);
   }, []);
 
-  const handleGenerate = async () => {
+  const handleGenerate = () => {
     if (!canCreate) return;
-    setPdfLoading(true);
-
-    try {
-      // Dynamic import only in browser — avoids SSR issues with @react-pdf/renderer
-      const [{ pdf }, { InvoicePDF }] = await Promise.all([
-        import("@react-pdf/renderer"),
-        import("@/components/InvoicePDF"),
-      ]);
-
-      const element = React.createElement(InvoicePDF, { data });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const blob = await pdf(element as any).toBlob();
-      const url = URL.createObjectURL(blob);
-      setPdfUrl(url);
-
-      incrementInvoiceCount();
-      setRemaining(remainingInvoices());
-      setCanCreate(canCreateInvoice());
-      setGenerated(true);
-    } catch (err) {
-      console.error("PDF generation failed:", err);
-      alert("Failed to generate PDF. Please try again.");
-    } finally {
-      setPdfLoading(false);
-    }
+    incrementInvoiceCount();
+    setRemaining(remainingInvoices());
+    setCanCreate(canCreateInvoice());
+    downloadInvoicePDF(data);
   };
 
   const subtotal = calculateSubtotal(data.items);
@@ -144,8 +110,7 @@ export default function CreateInvoice() {
         <p className="text-gray-400 text-sm">
           {remaining > 0 ? (
             <>
-              {remaining} free invoice{remaining !== 1 ? "s" : ""} remaining
-              this month
+              {remaining} free invoice{remaining !== 1 ? "s" : ""} remaining this month
             </>
           ) : (
             <span className="text-red-400">
@@ -369,23 +334,16 @@ export default function CreateInvoice() {
 
         {/* Generate */}
         <div className="flex flex-col items-center gap-4">
-          {!generated ? (
-            <button
-              onClick={handleGenerate}
-              disabled={!canCreate || pdfLoading}
-              className="bg-brand-600 hover:bg-brand-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg text-lg font-medium transition shadow-lg shadow-brand-600/25 disabled:shadow-none"
-            >
-              {pdfLoading ? "Generating..." : canCreate ? "Generate Invoice PDF" : "Free Limit Reached"}
-            </button>
-          ) : pdfUrl ? (
-            <a
-              href={pdfUrl}
-              download={`${data.invoiceNumber}.pdf`}
-              className="bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-lg text-lg font-medium transition shadow-lg shadow-green-600/25"
-            >
-              ⬇ Download PDF
-            </a>
-          ) : null}
+          <button
+            onClick={handleGenerate}
+            disabled={!canCreate}
+            className="bg-brand-600 hover:bg-brand-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-8 py-3 rounded-lg text-lg font-medium transition shadow-lg shadow-brand-600/25 disabled:shadow-none"
+          >
+            {canCreate ? "⬇ Generate & Download Invoice" : "Free Limit Reached"}
+          </button>
+          <p className="text-xs text-gray-500">
+            Opens a print-ready invoice — use &quot;Save as PDF&quot; to download
+          </p>
         </div>
       </div>
     </div>
