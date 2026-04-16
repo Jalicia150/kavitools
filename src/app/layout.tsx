@@ -46,6 +46,9 @@ export default function RootLayout({
               <a href="/#pricing" className="text-sm text-gray-400 hover:text-white transition">
                 Pricing
               </a>
+              <a href="/blog" className="text-sm text-gray-400 hover:text-white transition">
+                Blog
+              </a>
               <a
                 href="/create"
                 className="text-sm bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-lg transition"
